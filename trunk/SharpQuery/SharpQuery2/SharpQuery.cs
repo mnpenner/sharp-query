@@ -161,6 +161,7 @@ namespace SharpQuery
                         foreach (var filter in filters)
                         {
                             var value = resultNode.GetAttributeValue(filter.Attribute, "");
+                            double dv, df;
 
                             switch (filter.Operator)
                             {
@@ -182,10 +183,63 @@ namespace SharpQuery
                                 case "^=":
                                     pass &= value.StartsWith(filter.Value);
                                     break;
+                                case "%=":
+                                    string pattern = "";
+                                    RegexOptions options = RegexOptions.None;
+                                    if (filter.Value.Length > 2 && filter.Value[0] == '/')
+                                    {
+                                        int lastSlash = filter.Value.LastIndexOf('/');
+                                        pattern = filter.Value.Substring(1, lastSlash - 1);
+                                        string modChars = filter.Value.Substring(lastSlash + 1);
+                                        foreach (var c in modChars)
+                                        {
+                                            switch (c)
+                                            {
+                                                case 'i':
+                                                    options |= RegexOptions.IgnoreCase;
+                                                    break;
+                                                case 'm':
+                                                    options |= RegexOptions.Multiline;
+                                                    break;
+                                                case 's':
+                                                    options |= RegexOptions.Singleline;
+                                                    break;
+                                                case 'x':
+                                                    options |= RegexOptions.IgnorePatternWhitespace;
+                                                    break;
+                                            }
+                                        }
+                                    }
+                                    else pattern = filter.Value;
+                                    pass &= Regex.IsMatch(value, pattern, options);
+                                    break;
                                 case "=":
                                     pass &= value == filter.Value;
                                     break;
+                                case ">":
+                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df) 
+                                        ? dv > df 
+                                        : string.Compare(value, filter.Value) > 0;
+                                    break;
+                                case ">=":
+                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
+                                        ? dv >= df
+                                        : string.Compare(value, filter.Value) >= 0;
+                                    break;
+                                case "<":
+                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
+                                        ? dv < df
+                                        : string.Compare(value, filter.Value) < 0;
+                                    break;
+                                case "<=":
+                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
+                                        ? dv <= df
+                                        : string.Compare(value, filter.Value) <= 0;
+                                    break;
+
                             }
+
+                            if (!pass) break;
                         }
 
                         if (pass) yield return resultNode;
@@ -205,7 +259,7 @@ namespace SharpQuery
         private static readonly Regex _splitAttr = new Regex(@"(?<=\])(?=\[)");
         private static readonly Regex _parseAttr = new Regex(@"\[\s*
             (?<attr>" + _validName + @")\s*(?:
-            (?<op>[|*~$!^]?=)\s*
+            (?<op>[|*~$!^%<>]?=|[<>])\s*
             (?<quote>['""]?)
                 (?<value>.*)
             (?<!\\)\k<quote>\s*

@@ -12,9 +12,9 @@ namespace SharpQuery
     {
         static void Main(string[] args)
         {
-            var sq = SharpQuery.Load(new Uri("http://api.jquery.com/category/selectors/"));
+            var sq = SharpQuery.Load(new Uri("http://ca.yahoo.com/?p=us"));
 
-            foreach (var n in sq.Find(".title-link"))
+            foreach (var n in sq.Find(@"a[href %= /aDvErTiSiNg/i]"))
             {
                 Console.Write("<{0}", n.Name);
                 foreach (var a in n.Attributes)
@@ -22,6 +22,7 @@ namespace SharpQuery
                 Console.WriteLine(" />");
             }
 
+            Console.WriteLine("Done.");
             Console.ReadLine();
         }
     }
