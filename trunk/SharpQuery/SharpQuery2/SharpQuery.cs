@@ -277,162 +277,25 @@ namespace SharpQuery
             }
         }
 
+        private static IEnumerable<HtmlNode> FindRecurse(this IEnumerable<HtmlNode> context, IEnumerable<KeyValuePair<char?, string>> selectors)
+        {
+            var first = selectors.First();
+            var rest = selectors.Skip(1);
+            var nodes = context.FindSimple(first.Value);
+            if (rest.Any())
+                return FilterCombinator(FindRecurse(context, rest), rest.First().Key, nodes);
+            else
+                return nodes;
+        }
+
         private static IEnumerable<HtmlNode> FindComplex(this IEnumerable<HtmlNode> context, string selector)
         {
-            var selectors = SplitUnescaped(selector, _combinators).Reverse();
-            var nodes = context.FindSimple(selectors.First().Value);
-            foreach (var filter in selectors.Skip(1))
-                nodes = FilterCombinator(context.FindSimple(filter.Value), filter.Key, nodes);
-            return nodes;
+            return FindRecurse(context, SplitUnescaped(selector, _combinators).Reverse());
         }
 
         public static IEnumerable<HtmlNode> Find(this IEnumerable<HtmlNode> context, string selector)
         {
             return SplitUnescaped(selector, ',').SelectMany(s => FindComplex(context, s.Value));
-        }
-
-        [Obsolete]
-        public static IEnumerable<HtmlNode> Find2(this IEnumerable<HtmlNode> context, string selector)
-        {
-            var selectors = SplitUnescaped(selector, new[] { ',' }).Select(s => s.Value.Trim()).Where(s => !string.IsNullOrEmpty(s));
-
-            foreach (string select in selectors)
-            {
-                var tagName = "*";
-                var attrDict = new AttrDict();
-                var selMatch = _parseSelector2.Match(select);
-                var filters = new Queue<Filter>();
-                string[] attrBits;
-
-                if (selMatch.Groups["tag"].Success)
-                {
-                    switch (selMatch.Groups["type"].Value)
-                    {
-                        case "#":
-                            attrDict.Add("id", selMatch.Groups["tag"].Value);
-                            break;
-                        case ".":
-                            attrDict.Add("class", null);
-                            filters.Enqueue(new Filter { Attribute = "class", Operator = "~=", Value = selMatch.Groups["tag"].Value });
-                            break;
-                        default:
-                            tagName = selMatch.Groups["tag"].Value;
-                            break;
-                    }
-                }
-
-                if (selMatch.Groups["attrs"].Success)
-                {
-                    attrBits = _splitAttr.Split(selMatch.Groups["attrs"].Value);
-                    foreach (var attrStr in attrBits)
-                    {
-                        var attrMatch = _parseAttr2.Match(attrStr);
-                        attrDict.Add(attrMatch.Groups["attr"].Value, null);
-                        filters.Enqueue(new Filter { Attribute = attrMatch.Groups["attr"].Value, Operator = attrMatch.Groups["op"].Value, Value = attrMatch.Groups["value"].Value });
-                    }
-                }
-
-                var query = BuildQuery(tag: tagName, attrs: attrDict);
-
-                foreach (var contextNode in context)
-                {
-                    var resultNodes = contextNode.SelectNodes(query);
-
-                    if (resultNodes == null)
-                        continue;
-
-                    foreach (var resultNode in resultNodes)
-                    {
-                        bool pass = true;
-
-                        foreach (var filter in filters)
-                        {
-                            var value = resultNode.GetAttributeValue(filter.Attribute, "");
-                            double dv, df;
-
-                            switch (filter.Operator)
-                            {
-                                case "|=":
-                                    pass &= Regex.IsMatch(value, "^" + Regex.Escape(filter.Value) + "($|-)");
-                                    break;
-                                case "*=":
-                                    pass &= value.Contains(filter.Value);
-                                    break;
-                                case "~=":
-                                    pass &= Regex.IsMatch(value, @"(^|\s)" + Regex.Escape(filter.Value) + @"($|\s)");
-                                    break;
-                                case "$=":
-                                    pass &= value.EndsWith(filter.Value);
-                                    break;
-                                case "=":
-                                    pass &= value.Equals(filter.Value);
-                                    break;
-                                case "!=":
-                                    pass &= !value.Equals(filter.Value);
-                                    break;
-                                case "^=":
-                                    pass &= value.StartsWith(filter.Value);
-                                    break;
-                                case "%=":
-                                    string pattern = "";
-                                    RegexOptions options = RegexOptions.None;
-                                    if (filter.Value.Length > 2 && filter.Value[0] == '/')
-                                    {
-                                        int lastSlash = filter.Value.LastIndexOf('/');
-                                        pattern = filter.Value.Substring(1, lastSlash - 1);
-                                        string modChars = filter.Value.Substring(lastSlash + 1);
-                                        foreach (var c in modChars)
-                                        {
-                                            switch (c)
-                                            {
-                                                case 'i':
-                                                    options |= RegexOptions.IgnoreCase;
-                                                    break;
-                                                case 'm':
-                                                    options |= RegexOptions.Multiline;
-                                                    break;
-                                                case 's':
-                                                    options |= RegexOptions.Singleline;
-                                                    break;
-                                                case 'x':
-                                                    options |= RegexOptions.IgnorePatternWhitespace;
-                                                    break;
-                                            }
-                                        }
-                                    }
-                                    else pattern = filter.Value;
-                                    pass &= Regex.IsMatch(value, pattern, options);
-                                    break;
-                                case ">":
-                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df) 
-                                        ? dv > df 
-                                        : string.Compare(value, filter.Value) > 0;
-                                    break;
-                                case ">=":
-                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
-                                        ? dv >= df
-                                        : string.Compare(value, filter.Value) >= 0;
-                                    break;
-                                case "<":
-                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
-                                        ? dv < df
-                                        : string.Compare(value, filter.Value) < 0;
-                                    break;
-                                case "<=":
-                                    pass &= double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
-                                        ? dv <= df
-                                        : string.Compare(value, filter.Value) <= 0;
-                                    break;
-
-                            }
-
-                            if (!pass) break;
-                        }
-
-                        if (pass) yield return resultNode;
-                    }
-                }
-            }
         }
 
         public static IEnumerable<HtmlNode> Traverse(this IEnumerable<HtmlNode> context)
