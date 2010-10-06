@@ -262,7 +262,7 @@ namespace SharpQuery
         [Obsolete]
         public static IEnumerable<HtmlNode> Find2(this IEnumerable<HtmlNode> context, string selector)
         {
-            var selectors = SplitUnescaped2(selector, new[] { ',' }).Select(s => s.Value.Trim()).Where(s => !string.IsNullOrEmpty(s));
+            var selectors = SplitUnescaped(selector, new[] { ',' }).Select(s => s.Value.Trim()).Where(s => !string.IsNullOrEmpty(s));
 
             foreach (string select in selectors)
             {
