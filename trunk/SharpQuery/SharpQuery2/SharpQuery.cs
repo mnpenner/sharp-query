@@ -9,7 +9,7 @@ using System.Collections;
 using System.Xml.XPath;
 using System.Text.RegularExpressions;
 
-namespace SharpQuery
+namespace HtmlExtensions
 {
     using AttrDict = Dictionary<string, string>;
     using System.Diagnostics;
