@@ -186,15 +186,50 @@ namespace SharpQuery
             switch (combinator)
             {
                 case '>':
-                    return rightSeq.Where(right => leftSeq.Any(left => left.XPath == right.ParentNode.XPath));
+                    foreach (var l in leftSeq)
+                        foreach (var r in rightSeq)
+                            if (l.XPath == r.ParentNode.XPath)
+                                yield return r;
+                    break;
                 case '~':
-                    throw new NotImplementedException();
+                    foreach (var l in leftSeq)
+                    {
+                        foreach (var r in rightSeq)
+                        {
+                            var n = l;
+                            while ((n = n.NextSibling) != null)
+                                if (n.XPath == r.XPath) yield return r;
+                        }
+                    }
+                    break;
                 case '+':
-                    return rightSeq.Where(right => leftSeq.Contains(right.PreviousSibling));
+                    foreach (var l in leftSeq)
+                    {
+                        foreach (var r in rightSeq)
+                        {
+                            var n = l;
+                            while ((n = n.NextSibling) != null && n.NodeType != HtmlNodeType.Element) { }
+                            if (n.XPath == r.XPath)
+                                yield return r;
+                        }
+                    }
+                    break;
                 case ' ':
-                    throw new NotImplementedException();
+                    foreach (var l in leftSeq)
+                    {
+                        foreach (var r in rightSeq)
+                        {
+                            var n = r;
+                            while ((n = n.ParentNode) != null)
+                                if (n.XPath == l.XPath)
+                                    yield return r;
+                        }
+                    }
+                    break;
                 default:
-                    return rightSeq;
+                    foreach (var r in rightSeq)
+                        yield return r;
+                    break;
             }
         }
 
@@ -247,15 +282,12 @@ namespace SharpQuery
             var selectors = SplitUnescaped(selector, _combinators).Reverse();
             var nodes = context.FindSimple(selectors.First().Value);
             foreach (var filter in selectors.Skip(1))
-            {
                 nodes = FilterCombinator(context.FindSimple(filter.Value), filter.Key, nodes);
-            }
             return nodes;
         }
 
         public static IEnumerable<HtmlNode> Find(this IEnumerable<HtmlNode> context, string selector)
         {
-            selector = Regex.Replace(selector, string.Format(@"\s*([{0}])\s*", Regex.Escape(new String(_combinators))), "$1");
             return SplitUnescaped(selector, ',').SelectMany(s => FindComplex(context, s.Value));
         }
 
@@ -403,12 +435,12 @@ namespace SharpQuery
             }
         }
 
-        public static IEnumerable<HtmlNode> Walk(this IEnumerable<HtmlNode> context)
+        public static IEnumerable<HtmlNode> Traverse(this IEnumerable<HtmlNode> context)
         {
             foreach (var n1 in context)
             {
                 yield return n1;
-                foreach (var n2 in n1.ChildNodes.Walk())
+                foreach (var n2 in n1.ChildNodes.Traverse())
                     yield return n2;
             }
         }
