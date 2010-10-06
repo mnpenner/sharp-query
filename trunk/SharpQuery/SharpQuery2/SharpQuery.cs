@@ -113,7 +113,7 @@ namespace SharpQuery
         private static bool FilterAttribute(HtmlNode node, Filter filter)
         {
             var value = node.GetAttributeValue(filter.Attribute, "");
-            double dv, df;
+            decimal dv, df;
 
             switch (filter.Operator)
             {
@@ -161,21 +161,17 @@ namespace SharpQuery
                     else pattern = filter.Value;
                     return Regex.IsMatch(value, pattern, options);
                 case ">":
-                    return double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
-                        ? dv > df
-                        : string.Compare(value, filter.Value) > 0;
+                    return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ? 
+                        dv > df : false : string.Compare(value, filter.Value) > 0;
                 case ">=":
-                    return double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
-                        ? dv >= df
-                        : string.Compare(value, filter.Value) >= 0;
+                    return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ?
+                        dv >= df : false : string.Compare(value, filter.Value) >= 0;
                 case "<":
-                    return double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
-                        ? dv < df
-                        : string.Compare(value, filter.Value) < 0;
+                    return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ?
+                        dv < df : false : string.Compare(value, filter.Value) < 0;
                 case "<=":
-                    return double.TryParse(value, out dv) && double.TryParse(filter.Value, out df)
-                        ? dv <= df
-                        : string.Compare(value, filter.Value) <= 0;
+                    return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ?
+                        dv <= df : false : string.Compare(value, filter.Value) <= 0;
                 default:
                     return false;
             }
@@ -233,12 +229,14 @@ namespace SharpQuery
             }
         }
 
+        
+
         private static IEnumerable<HtmlNode> FindSimple(this IEnumerable<HtmlNode> context, string selector)
         {
             var tagName = "*";
             var attrDict = new AttrDict();
             var filters = new List<Filter>();
-            var selMatch = _parseSelector.Match(selector);
+            var selMatch = _parseExpr.Match(selector);
 
             if (selMatch.Groups["tag"].Success)
                 tagName = selMatch.Groups["tag"].Value;
@@ -308,27 +306,10 @@ namespace SharpQuery
             }
         }
 
-        #region Regexes
+        #region Constants
         // reference: http://www.w3.org/TR/REC-xml/#sec-common-syn
+
         private static readonly string _namePattern = @"-?[_a-zA-Z]+[_a-zA-Z0-9-]*";
-        [Obsolete]
-        private static readonly Regex _parseSelector2 = new Regex(@"
-            (?<type>[#.])?
-            (?<tag>" + _namePattern + @"|\*)?
-            (?<attrs>\[.*\])?
-        ", RegexOptions.IgnorePatternWhitespace);
-        [Obsolete]
-        private static readonly Regex _splitAttr = new Regex(@"(?<=\])(?=\[)");
-        [Obsolete]
-        private static readonly Regex _parseAttr2 = new Regex(@"\[\s*
-            (?<attr>" + _namePattern + @")\s*
-            (?:
-                (?<op>[|*~$!^%<>]?=|[<>])\s*
-                (?<quote>['""]?)
-                    (?<value>.*)
-                (?<!\\)\k<quote>\s*
-            )?
-        \]", RegexOptions.IgnorePatternWhitespace);
 
         private static readonly Regex _parseAttr = new Regex(@"\[\s*
             (?<name>" + _namePattern + @")\s*
@@ -340,7 +321,7 @@ namespace SharpQuery
             )?
         \]", RegexOptions.IgnorePatternWhitespace);
 
-        private static readonly Regex _parseSelector = new Regex(@"
+        private static readonly Regex _parseExpr = new Regex(@"
             (?<tag>" + _namePattern + @")?
             (?:\.(?<class>" + _namePattern + @"))*
             (?:\#(?<id>" + _namePattern + @"))*
@@ -348,8 +329,31 @@ namespace SharpQuery
             (?::(?<pseudo>" + _namePattern + @"))*
         ", RegexOptions.IgnorePatternWhitespace);
 
-        private static char[] _combinators = new[] { '>', '+', '~', ' ' };
+        private static readonly char[] _combinators = new[] { '>', '+', '~', ' ' };
 
+        private struct Combinators
+        {
+            public const char DirectChild = '>';
+            public const char NextAdjacent = '+';
+            public const char NextSiblings = '~';
+            public const char Descendant = ' ';
+        }
+
+        private struct Operators
+        {
+            public const string PrefixEquals = "|=";
+            public const string ContainsSubstring = "*=";
+            public const string ContainsWord = "~=";
+            public const string EndsWith = "$=";
+            public const string EqualTo = "=";
+            public const string NotEqualTo = "!=";
+            public const string StartsWith = "^=";
+            public const string MatchesRegex = "%=";
+            public const string GreaterThan = ">";
+            public const string GreaterThanOrEqualTo = ">=";
+            public const string LessThan = "<";
+            public const string LessThanOrEqualTo = "<=";
+        }
         #endregion
     }
 }
