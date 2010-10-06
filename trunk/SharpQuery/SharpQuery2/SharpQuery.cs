@@ -92,7 +92,7 @@ namespace SharpQuery
                     while (input[i] == ' ' && separators.Contains(input[i + 1])) { ++i; }
                     yield return new KeyValuePair<char?, string>(input[i], input.Substring(startIndex, endIndex - startIndex));
                     while (input[++i] == ' ') { }
-                    startIndex = i;
+                    startIndex = i--;
                 }
             }
 
@@ -205,7 +205,7 @@ namespace SharpQuery
                         {
                             var n = l;
                             while ((n = n.NextSibling) != null && n.NodeType != HtmlNodeType.Element) { }
-                            if (n.XPath == r.XPath)
+                            if (n != null && n.XPath == r.XPath)
                                 yield return r;
                         }
                     }
@@ -322,7 +322,7 @@ namespace SharpQuery
         \]", RegexOptions.IgnorePatternWhitespace);
 
         private static readonly Regex _parseExpr = new Regex(@"
-            (?<tag>" + _namePattern + @")?
+            (?<tag>\*|" + _namePattern + @")?
             (?:\.(?<class>" + _namePattern + @"))*
             (?:\#(?<id>" + _namePattern + @"))*
             (?<attr>\[.*?\])*

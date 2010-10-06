@@ -5,6 +5,7 @@ using System.Text;
 using HtmlAgilityPack;
 using System.Collections;
 using System.Text.RegularExpressions;
+using System.IO;
 
 namespace SharpQuery
 {
@@ -12,13 +13,25 @@ namespace SharpQuery
     {
         static void Main(string[] args)
         {
-            var sq = SharpQuery.Load(new Uri("http://ca.yahoo.com/?p=us"));
+            var sq = SharpQuery.Load(@"
+<html>
+<head>
+    <title>title</title>
+</head>
+<body>
+    <p val=-1>
+    <p val=0>
+    <p val=1>
+    <p val=x>
+</body>
+</html>");
 
-            foreach (var n in sq.Find(@"a[href %= /aDvErTiSiNg/i]"))
+            foreach (var n in sq.Find(@"body>[val>0]"))
             {
                 Console.Write("<{0}", n.Name);
                 foreach (var a in n.Attributes)
-                    Console.Write(" {0}=\"{1}\"", a.Name, a.Value);
+                    if(a.Name != "title")
+                        Console.Write(" {0}=\"{1}\"", a.Name, a.Value);
                 Console.WriteLine(" />");
             }
 
