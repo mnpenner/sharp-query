@@ -134,7 +134,7 @@ namespace SharpQuery
                 case "%=":
                     string pattern = "";
                     RegexOptions options = RegexOptions.None;
-                    if (filter.Value.Length > 2 && filter.Value[0] == '/')
+                    if (filter.Value.Length >= 2 && filter.Value[0] == '/')
                     {
                         int lastSlash = filter.Value.LastIndexOf('/');
                         pattern = filter.Value.Substring(1, lastSlash - 1);
