@@ -9,7 +9,7 @@ using System.Collections;
 using System.Xml.XPath;
 using System.Text.RegularExpressions;
 
-namespace HtmlExtensions
+namespace HtmlAgilityPlus
 {
     using AttrDict = Dictionary<string, string>;
     using System.Diagnostics;
@@ -21,12 +21,8 @@ namespace HtmlExtensions
         {
             var doc = new HtmlDocument();
             WebClient wc = new WebClient();
-            try
-            {
-                using (var str = wc.OpenRead(uri))
-                    doc.Load(str);
-            }
-            catch (WebException) { yield break; }
+            using (var str = wc.OpenRead(uri))
+                doc.Load(str);
             yield return doc.DocumentNode;
         }
 
@@ -110,7 +106,8 @@ namespace HtmlExtensions
         }
         #endregion
 
-        private static bool FilterAttribute(HtmlNode node, Filter filter)
+        #region Private Solvers
+        private static bool TestFilter(HtmlNode node, Filter filter)
         {
             var value = node.GetAttributeValue(filter.Attribute, "");
             decimal dv, df;
@@ -229,8 +226,6 @@ namespace HtmlExtensions
             }
         }
 
-        
-
         private static IEnumerable<HtmlNode> FindSimple(this IEnumerable<HtmlNode> context, string selector)
         {
             var tagName = "*";
@@ -269,7 +264,7 @@ namespace HtmlExtensions
 
                 foreach (var resultNode in resultNodes)
                 {
-                    if (filters.All(f => FilterAttribute(resultNode, f)))
+                    if (filters.All(f => TestFilter(resultNode, f)))
                         yield return resultNode;
                 }
             }
@@ -290,6 +285,13 @@ namespace HtmlExtensions
         {
             return FindRecurse(context, SplitUnescaped(selector, _combinators).Reverse());
         }
+        #endregion
+
+        #region Public Methods
+        public static IEnumerable<HtmlNode> Find(this HtmlNode context, string selector)
+        {
+            return Find(new[] { context }, selector);
+        }
 
         public static IEnumerable<HtmlNode> Find(this IEnumerable<HtmlNode> context, string selector)
         {
@@ -305,6 +307,7 @@ namespace HtmlExtensions
                     yield return n2;
             }
         }
+        #endregion
 
         #region Constants
         // reference: http://www.w3.org/TR/REC-xml/#sec-common-syn
