@@ -6,8 +6,9 @@ using HtmlAgilityPack;
 using System.Collections;
 using System.Text.RegularExpressions;
 using System.IO;
+using HtmlAgilityPlus;
 
-namespace SharpQuery
+namespace EntryPoint
 {
     class Program
     {
@@ -23,10 +24,14 @@ namespace SharpQuery
     <p val=0>
     <p val=1>
     <p val=x>
+    <p val=/>
+    <p val>
+    <p val=' '>
+    <p val='a-b'>
 </body>
 </html>");
 
-            foreach (var n in sq.Find(@"body>[val>0]"))
+            foreach (var n in sq.Find(@"[val=' ']"))
             {
                 Console.Write("<{0}", n.Name);
                 foreach (var a in n.Attributes)

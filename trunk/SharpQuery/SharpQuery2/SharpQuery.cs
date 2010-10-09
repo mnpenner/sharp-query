@@ -8,11 +8,11 @@ using System.IO;
 using System.Collections;
 using System.Xml.XPath;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
 
 namespace HtmlAgilityPlus
 {
     using AttrDict = Dictionary<string, string>;
-    using System.Diagnostics;
 
     public static class SharpQuery
     {

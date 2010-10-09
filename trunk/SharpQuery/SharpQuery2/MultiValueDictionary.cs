@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Collections;
 
-namespace SharpQuery
+namespace HtmlAgilityPlus
 {
     public class MultiValueDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
