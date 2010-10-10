@@ -13,7 +13,7 @@ namespace HtmlAgilityPlus.Tests
         [SetUp]
         public void Init()
         {
-            sq = SharpQuery.Load(@"
+            sq = SharpQuery.LoadHtml(@"
             <html>
             <head>
                 <title>title</title>

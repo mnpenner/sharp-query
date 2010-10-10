@@ -13,6 +13,7 @@ using System.Diagnostics;
 namespace HtmlAgilityPlus
 {
     using AttrDict = Dictionary<string, string>;
+    using System.Reflection;
 
     public static class SharpQuery
     {
@@ -20,13 +21,18 @@ namespace HtmlAgilityPlus
         public static IEnumerable<HtmlNode> Load(Uri uri)
         {
             var doc = new HtmlDocument();
-            WebClient wc = new WebClient();
-            using (var str = wc.OpenRead(uri))
-                doc.Load(str);
+            var wc = new WebClient();
+            using (var stream = wc.OpenRead(uri))
+                doc.Load(stream);
             yield return doc.DocumentNode;
         }
 
-        public static IEnumerable<HtmlNode> Load(string html)
+        public static IEnumerable<HtmlNode> Load(string uri)
+        {
+            return Load(new Uri(uri));
+        }
+
+        public static IEnumerable<HtmlNode> LoadHtml(string html)
         {
             var doc = new HtmlDocument();
             doc.LoadHtml(html);
@@ -42,9 +48,9 @@ namespace HtmlAgilityPlus
 
         public static IEnumerable<HtmlNode> Load(params HtmlNode[] nodes)
         {
-            foreach (var n in nodes)
-                yield return n;
+            return nodes;
         }
+
         #endregion
 
         #region Helper Methods
@@ -98,7 +104,7 @@ namespace HtmlAgilityPlus
         #endregion
 
         #region Helper Structs
-        private struct Filter
+        private struct AttributeFilter
         {
             public string Attribute;
             public string Operator;
@@ -107,29 +113,29 @@ namespace HtmlAgilityPlus
         #endregion
 
         #region Private Solvers
-        private static bool TestFilter(HtmlNode node, Filter filter)
+        private static bool TestFilter(HtmlNode node, AttributeFilter filter)
         {
             var value = node.GetAttributeValue(filter.Attribute, "");
             decimal dv, df;
 
             switch (filter.Operator)
             {
-                case "|=":
+                case AttributeSelectors.PrefixEquals:
                     return Regex.IsMatch(value, "^" + Regex.Escape(filter.Value) + "($|-)");
-                case "*=":
+                case AttributeSelectors.ContainsSubstring:
                     return value.Contains(filter.Value);
-                case "~=":
+                case AttributeSelectors.ContainsWord:
                     return Regex.IsMatch(value, @"(^|\s)" + Regex.Escape(filter.Value) + @"($|\s)");
-                case "$=":
+                case AttributeSelectors.EndsWith:
                     return value.EndsWith(filter.Value);
-                case "=":
+                case AttributeSelectors.EqualTo:
                     return value.Equals(filter.Value);
-                case "!=":
+                case AttributeSelectors.NotEqualTo:
                     return !value.Equals(filter.Value);
-                case "^=":
+                case AttributeSelectors.StartsWith:
                     return value.StartsWith(filter.Value);
-                case "%=":
-                    string pattern = "";
+                case AttributeSelectors.MatchesRegex:
+                    string pattern;
                     RegexOptions options = RegexOptions.None;
                     if (filter.Value.Length >= 2 && filter.Value[0] == '/')
                     {
@@ -157,16 +163,16 @@ namespace HtmlAgilityPlus
                     }
                     else pattern = filter.Value;
                     return Regex.IsMatch(value, pattern, options);
-                case ">":
+                case AttributeSelectors.GreaterThan:
                     return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ? 
                         dv > df : false : string.Compare(value, filter.Value) > 0;
-                case ">=":
+                case AttributeSelectors.GreaterThanOrEqualTo:
                     return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ?
                         dv >= df : false : string.Compare(value, filter.Value) >= 0;
-                case "<":
+                case AttributeSelectors.LessThan:
                     return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ?
                         dv < df : false : string.Compare(value, filter.Value) < 0;
-                case "<=":
+                case AttributeSelectors.LessThanOrEqualTo:
                     return decimal.TryParse(filter.Value, out df) ? decimal.TryParse(value, out dv) ?
                         dv <= df : false : string.Compare(value, filter.Value) <= 0;
                 default:
@@ -178,13 +184,13 @@ namespace HtmlAgilityPlus
         {
             switch (combinator)
             {
-                case '>':
+                case Combinators.DirectChild:
                     foreach (var l in leftSeq)
                         foreach (var r in rightSeq)
                             if (l.XPath == r.ParentNode.XPath)
                                 yield return r;
                     break;
-                case '~':
+                case Combinators.NextSiblings:
                     foreach (var l in leftSeq)
                     {
                         foreach (var r in rightSeq)
@@ -195,7 +201,7 @@ namespace HtmlAgilityPlus
                         }
                     }
                     break;
-                case '+':
+                case Combinators.NextAdjacent:
                     foreach (var l in leftSeq)
                     {
                         foreach (var r in rightSeq)
@@ -207,7 +213,7 @@ namespace HtmlAgilityPlus
                         }
                     }
                     break;
-                case ' ':
+                case Combinators.Descendant:
                     foreach (var l in leftSeq)
                     {
                         foreach (var r in rightSeq)
@@ -230,26 +236,26 @@ namespace HtmlAgilityPlus
         {
             var tagName = "*";
             var attrDict = new AttrDict();
-            var filters = new List<Filter>();
-            var selMatch = _parseExpr.Match(selector);
+            var filters = new List<AttributeFilter>();
+            var selMatch = ParseExpr.Match(selector);
 
             if (selMatch.Groups["tag"].Success)
                 tagName = selMatch.Groups["tag"].Value;
             foreach (Capture cap in selMatch.Groups["class"].Captures)
             {
                 attrDict["class"] = null;
-                filters.Add(new Filter { Attribute = "class", Operator = "~=", Value = cap.Value });
+                filters.Add(new AttributeFilter { Attribute = "class", Operator = "~=", Value = cap.Value });
             }
             if (selMatch.Groups["id"].Success)
                 attrDict["id"] = selMatch.Groups["id"].Value;
             foreach (Capture cap in selMatch.Groups["attr"].Captures)
             {
-                var attrMatch = _parseAttr.Match(cap.Value);
+                var attrMatch = ParseAttr.Match(cap.Value);
                 if (attrMatch.Success)
                 {
                     attrDict[attrMatch.Groups["name"].Value] = null;
                     if (attrMatch.Groups["value"].Success)
-                        filters.Add(new Filter { Attribute = attrMatch.Groups["name"].Value, Operator = attrMatch.Groups["op"].Value, Value = attrMatch.Groups["value"].Value });
+                        filters.Add(new AttributeFilter { Attribute = attrMatch.Groups["name"].Value, Operator = attrMatch.Groups["op"].Value, Value = attrMatch.Groups["value"].Value });
                 }
             }
 
@@ -283,7 +289,7 @@ namespace HtmlAgilityPlus
 
         private static IEnumerable<HtmlNode> FindComplex(this IEnumerable<HtmlNode> context, string selector)
         {
-            return FindRecurse(context, SplitUnescaped(selector, _combinators).Reverse());
+            return FindRecurse(context, SplitUnescaped(selector, Combinators.ToArray()).Reverse());
         }
         #endregion
 
@@ -312,29 +318,49 @@ namespace HtmlAgilityPlus
         #region Constants
         // reference: http://www.w3.org/TR/REC-xml/#sec-common-syn
 
-        private static readonly string _namePattern = @"-?[_a-zA-Z]+[_a-zA-Z0-9-]*";
+        private const string NamePattern = @"-?[_a-zA-Z]+[_a-zA-Z0-9-]*";
 
-        private static readonly Regex _parseAttr = new Regex(@"\[\s*
-            (?<name>" + _namePattern + @")\s*
+        private static readonly Regex ParseAttr = new Regex(@"\[\s*
+            (?<name>" + NamePattern + @")\s*
             (?:
-                (?<op>[|*~$!^%<>]?=|[<>])\s*
+                (?<op>" + AttributeSelectors.Pattern + @")\s*
                 (?<quote>['""]?)
                     (?<value>.*?)
                 (?<!\\)\k<quote>\s*
             )?
         \]", RegexOptions.IgnorePatternWhitespace);
 
-        private static readonly Regex _parseExpr = new Regex(@"
-            (?<tag>\*|" + _namePattern + @")?
-            (?:\.(?<class>" + _namePattern + @"))*
-            (?:\#(?<id>" + _namePattern + @"))*
+        private static readonly Regex ParseExpr = new Regex(@"
+            (?<tag>\*|" + NamePattern + @")?
+            (?:\.(?<class>" + NamePattern + @"))*
+            (?:\#(?<id>" + NamePattern + @"))*
             (?<attr>\[.*?\])*
-            (?::(?<pseudo>" + _namePattern + @"))*
+            (?::(?<pseudo>" + NamePattern + @"))*
         ", RegexOptions.IgnorePatternWhitespace);
 
-        private static readonly char[] _combinators = new[] { '>', '+', '~', ' ' };
+        private class TypedEnum<TBase, TValue>
+        {
+            private static IEnumerable<TValue> AsEnumerable()
+            {
+                return typeof (TBase).GetFields(BindingFlags.Public | BindingFlags.Static)
+                    .Select(f => f.GetValue(null)).OfType<TValue>();
+            }
 
-        private struct Combinators
+            public static TValue[] ToArray()
+            {
+                return AsEnumerable().ToArray();
+            }
+
+            public static string Pattern
+            {
+                get
+                {
+                    return string.Format("(?:{0})", string.Join("|", AsEnumerable().Select(x => Regex.Escape(x.ToString()))));
+                }
+            }
+        }
+
+        private class Combinators : TypedEnum<Combinators, char>
         {
             public const char DirectChild = '>';
             public const char NextAdjacent = '+';
@@ -342,7 +368,7 @@ namespace HtmlAgilityPlus
             public const char Descendant = ' ';
         }
 
-        private struct Operators
+        private class AttributeSelectors : TypedEnum<AttributeSelectors, string>
         {
             public const string PrefixEquals = "|=";
             public const string ContainsSubstring = "*=";
@@ -352,10 +378,10 @@ namespace HtmlAgilityPlus
             public const string NotEqualTo = "!=";
             public const string StartsWith = "^=";
             public const string MatchesRegex = "%=";
-            public const string GreaterThan = ">";
             public const string GreaterThanOrEqualTo = ">=";
-            public const string LessThan = "<";
             public const string LessThanOrEqualTo = "<=";
+            public const string GreaterThan = ">";
+            public const string LessThan = "<";
         }
         #endregion
     }
