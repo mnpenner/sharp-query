@@ -9,6 +9,14 @@ namespace HtmlAgilityPlus.Extensions
     {
         private static Dictionary<HtmlNode, Dictionary<string, object>> _data = new Dictionary<HtmlNode, Dictionary<string, object>>();
 
+        public static HtmlNode PreviousSiblingElement(this HtmlNode node)
+        {
+            for (var it = node.PreviousSibling; it != null; it = it.PreviousSibling)
+                if (it.NodeType == HtmlNodeType.Element)
+                    return it;
+            return null;
+        }
+
         public static HtmlNode NextSiblingElement(this HtmlNode node)
         {
             for (var it = node.NextSibling; it != null; it = it.NextSibling)
@@ -21,6 +29,15 @@ namespace HtmlAgilityPlus.Extensions
         {
             var siblings = new HtmlNodeCollection(node.ParentNode);
             for (var it = node.NextSibling; it != null; it = it.NextSibling)
+                if (it.NodeType == HtmlNodeType.Element)
+                    siblings.Add(it);
+            return siblings;
+        }
+
+        public static HtmlNodeCollection PreviousSiblingElements(this HtmlNode node)
+        {
+            var siblings = new HtmlNodeCollection(node.ParentNode);
+            for (var it = node.PreviousSibling; it != null; it = it.PreviousSibling)
                 if (it.NodeType == HtmlNodeType.Element)
                     siblings.Add(it);
             return siblings;

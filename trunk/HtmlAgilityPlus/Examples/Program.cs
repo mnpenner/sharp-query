@@ -13,8 +13,14 @@ namespace Examples
     {
         static void Main(string[] args)
         {
-            var sq = new SharpQuery("http://api.jquery.com/category/selectors/");
-            foreach (var n in sq.Find(".title-link"))
+            var sq = new SharpQuery(@"
+<ul>
+    <li>zero</li>
+    <li>one</li>
+    <li>two</li>
+    <li>three</li>
+</ul>");
+            foreach (var n in sq.Find("li:odd"))
                 Console.WriteLine(n.OuterHtml);
             Console.ReadLine();
         }

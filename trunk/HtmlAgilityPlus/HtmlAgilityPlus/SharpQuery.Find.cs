@@ -140,7 +140,7 @@ namespace HtmlAgilityPlus
             }
         }
 
-        private static IEnumerable<HtmlNode> Filter_Pseudo(IEnumerable<HtmlNode> nodes, string funcName, string[] args)
+        private static IEnumerable<HtmlNode> Filter_Pseudo(IEnumerable<HtmlNode> nodes, string funcName, IList<string> args)
         {
             switch (funcName.ToLower())
             {
@@ -150,41 +150,60 @@ namespace HtmlAgilityPlus
                             yield return node;
                     break;
                 case "checkbox":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && node.Attr("type") == "checkbox")
+                            yield return node;
                     break;
                 case "checked":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && (node.Attr("type") == "checkbox" || node.Attr("type") == "radio") && node.HasAttr("checked"))
+                            yield return node;
                     break;
                 case "contains":
                     throw new NotImplementedException();
                     break;
                 case "disabled":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.HasAttr("disabled"))
+                            yield return node;
                     break;
                 case "empty":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.ChildNodes.Count == 0)
+                            yield return node;
+                    break;
+                case "empty-value":
+                    foreach (var node in nodes)
+                    {
+                        var val = node.Val();
+                        if ((val is string[] && val.Length == 0) || (val is string && string.IsNullOrWhiteSpace(val)))
+                            yield return node;
+                    }
                     break;
                 case "enabled":
                     throw new NotImplementedException();
                     break;
                 case "eq":
-                    throw new NotImplementedException();
+                    {
+                        int index = int.Parse(args[0]);
+                        if (nodes.Count() >= index)
+                            yield return nodes.ElementAt(index);
+                    }
                     break;
                 case "even":
-                    {
-                        int i = 0;
-                        foreach (var node in nodes)
-                            if (i++ % 2 == 0) yield return node;
-                    }
+                    foreach (var p in nodes.Enumerate())
+                        if (p.Key % 2 == 0) yield return p.Value;
                     break;
                 case "file":
                     throw new NotImplementedException();
                     break;
                 case "first-child":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.PreviousSibling == null)
+                            yield return node;
                     break;
                 case "first":
-                    throw new NotImplementedException();
+                    if (nodes.Any()) yield return nodes.First();
                     break;
                 case "gt":
                     throw new NotImplementedException();
@@ -193,22 +212,30 @@ namespace HtmlAgilityPlus
                     throw new NotImplementedException();
                     break;
                 case "header":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (Regex.IsMatch(node.Name, "h[1-6]"))
+                            yield return node;
                     break;
                 case "hidden":
-                    throw new NotImplementedException();
+                    throw new NotSupportedException("Can't determine if element is visible without JavaScript and CSS support.");
                     break;
                 case "image":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && node.Attr("type") == "image")
+                            yield return node;
                     break;
                 case "input":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" || node.Name == "textarea" || node.Name == "select")
+                            yield return node;
                     break;
                 case "last-child":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.NextSibling == null)
+                            yield return node;
                     break;
                 case "last":
-                    throw new NotImplementedException();
+                    if (nodes.Any()) yield return nodes.Last();
                     break;
                 case "lt":
                     throw new NotImplementedException();
@@ -220,38 +247,50 @@ namespace HtmlAgilityPlus
                     throw new NotImplementedException();
                     break;
                 case "odd":
-                    {
-                        int i = 0;
-                        foreach (var node in nodes)
-                            if (i++ % 2 == 1) yield return node;
-                    }
+                    foreach (var p in nodes.Enumerate())
+                        if (p.Key % 2 == 1) yield return p.Value;
                     break;
                 case "only-child":
-                    throw new NotImplementedException();
+                    if (nodes.Count() == 1)
+                        yield return nodes.Single();
                     break;
                 case "parent":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.ChildNodes.Count > 0)
+                            yield return node;
                     break;
                 case "password":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && node.Attr("type") == "password")
+                            yield return node;
                     break;
                 case "radio":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && node.Attr("type") == "radio")
+                            yield return node;
                     break;
                 case "reset":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && node.Attr("type") == "reset")
+                            yield return node;
                     break;
                 case "selected":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "option" && node.HasAttr("selected"))
+                            yield return node;
                     break;
                 case "submit":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if ((node.Name == "input" || node.Name == "button") && node.Attr("type") == "submit")
+                            yield return node;
                     break;
                 case "text":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && (!node.HasAttr("type") || node.Attr("type") == "text"))
+                            yield return node;
                     break;
                 case "visible":
-                    throw new NotImplementedException();
+                    throw new NotSupportedException("Can't determine if element is visible without JavaScript and CSS support.");
                     break;
                 default:
                     throw new NotSupportedException(string.Format("'{0}' pseudo selector not supported.", funcName));
