@@ -236,7 +236,7 @@ namespace HtmlAgilityPlus
         /// <returns></returns>
         public SharpQuery Not(params HtmlNode[] elements)
         {
-            throw new NotImplementedException();
+            return new SharpQuery(_context.Where(node => !elements.Contains(node)), this);
         }
 
         /// <summary>
@@ -246,7 +246,7 @@ namespace HtmlAgilityPlus
         /// <returns></returns>
         public SharpQuery Not(Func<HtmlNode, int, bool> function)
         {
-            throw new NotImplementedException();
+            return new SharpQuery(_context.Where((n, i) => !function(n, i)), this);
         }
 
         /// <summary>
@@ -281,7 +281,7 @@ namespace HtmlAgilityPlus
         {
             var parents = new List<HtmlNode>();
             foreach (var node in _context)
-                for (HtmlNode it = node.ParentElement(); it != null; it = it.ParentElement())
+                for (HtmlNode it = node.ParentNode; it != null; it = it.ParentNode)
                     parents.Add(it);
             return new SharpQuery(parents, this);
         }
