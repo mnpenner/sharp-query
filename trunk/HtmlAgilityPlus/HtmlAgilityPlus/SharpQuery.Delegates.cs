@@ -13,9 +13,9 @@ namespace HtmlAgilityPlus
         /// </summary>
         /// <param name="callback">A delegate that will be invoked for each element in the current set.</param>
         /// <returns>A new SharpQuery object containing the return nodes. <c>null</c> nodes are omitted.</returns>
-        public SharpQuery Map(Func<int, HtmlNode, HtmlNode> callback)
+        public SharpQuery Map(Func<HtmlNode, int, HtmlNode> callback)
         {
-            return new SharpQuery(_context.Select((n, i) => callback(i, n)).Where(n => n != null), this);
+            return new SharpQuery(_context.Select(callback).Where(n => n != null), this);
         }
 
         /// <summary>
@@ -23,21 +23,21 @@ namespace HtmlAgilityPlus
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="callback">A delegate that will be invoked for each element in the current set.</param>
-        /// <returns></returns>
-        public T[] Map<T>(Func<int, HtmlNode, T> callback)
+        /// <returns>An array containing the return values of the callback function.</returns>
+        public T[] Map<T>(Func<HtmlNode, int, T> callback)
         {
-            return _context.Select((n, i) => callback(i, n)).ToArray();
+            return _context.Select(callback).ToArray();
         }
 
         /// <summary>
         /// Iterate over a SharpQuery object, executing a function for each matched element.
         /// </summary>
         /// <param name="function">A function to execute for each matched element.</param>
-        /// <returns></returns>
-        public SharpQuery Each(Action<int, HtmlNode> function)
+        /// <returns>The SharpQuery object, unmodified, for chaining.</returns>
+        public SharpQuery Each(Action<HtmlNode, int> function)
         {
             for (int i = 0; i < _context.Count; ++i)
-                function(i, _context[i]);
+                function(_context[i], i);
             return this;
         }
     }

@@ -13,7 +13,7 @@ namespace HtmlAgilityPlus
         /// <returns></returns>
         public object Clone()
         {
-            throw new NotImplementedException();
+            return new SharpQuery(_context, _previous);
         }
     }
 }

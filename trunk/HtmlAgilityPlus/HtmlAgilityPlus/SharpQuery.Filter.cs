@@ -23,9 +23,9 @@ namespace HtmlAgilityPlus
         /// </summary>
         /// <param name="function">A function used as a test for each element in the set.</param>
         /// <returns></returns>
-        public SharpQuery Filter(Func<int, HtmlNode, bool> function)
+        public SharpQuery Filter(Func<HtmlNode, int, bool> function)
         {
-            throw new NotImplementedException();
+            return new SharpQuery(_context.Where(function), this);
         }
 
         /// <summary>

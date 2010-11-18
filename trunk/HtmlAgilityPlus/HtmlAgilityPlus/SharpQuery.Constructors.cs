@@ -76,7 +76,7 @@ namespace HtmlAgilityPlus
         private void LoadUri(Uri uri)
         {
             if (!SupportedSchemes.Contains(uri.Scheme))
-                throw new NotSupportedException(string.Format("{0} scheme not supported.", uri.Scheme));
+                throw new NotSupportedException(string.Format("'{0}' scheme not supported.", uri.Scheme));
 
             var doc = new HtmlDocument();
             var wc = new WebClient();

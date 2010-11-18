@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using HtmlAgilityPack;
 using System;
 
@@ -91,7 +92,7 @@ namespace HtmlAgilityPlus.Extensions
         /// <returns></returns>
         public static bool HasClass(this HtmlNode node, string className)
         {
-            throw new NotImplementedException();
+            return node.HasAttr("class") ? Regex.IsMatch(node.Attr("class"), @"(^|\s)" + Regex.Escape(className) + @"($|\s)") : false;
         }
 
         /// <summary>

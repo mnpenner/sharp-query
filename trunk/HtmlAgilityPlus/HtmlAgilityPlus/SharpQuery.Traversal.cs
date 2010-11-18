@@ -244,7 +244,7 @@ namespace HtmlAgilityPlus
         /// </summary>
         /// <param name="function">A function used as a test for each element in the set.</param>
         /// <returns></returns>
-        public SharpQuery Not(Func<int, HtmlNode, bool> function)
+        public SharpQuery Not(Func<HtmlNode, int, bool> function)
         {
             throw new NotImplementedException();
         }
