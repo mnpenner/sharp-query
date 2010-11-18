@@ -10,6 +10,15 @@ namespace HtmlAgilityPlus
     public partial class SharpQuery
     {
         /// <summary>
+        /// Fixes some bugs in HtmlAgilityPack.
+        /// </summary>
+        static SharpQuery()
+        {
+            HtmlNode.ElementsFlags.Remove("form"); // http://htmlagilitypack.codeplex.com/workitem/23074
+            HtmlNode.ElementsFlags.Add("li", HtmlElementFlag.Empty | HtmlElementFlag.Closed); // http://htmlagilitypack.codeplex.com/workitem/29218
+        }
+
+        /// <summary>
         /// Constructs a new SharpQuery object containing only the document node.
         /// </summary>
         /// <param name="htmlOrUri">A string containing HTML or an absolute URI</param>

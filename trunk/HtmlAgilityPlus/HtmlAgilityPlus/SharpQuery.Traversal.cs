@@ -140,12 +140,12 @@ namespace HtmlAgilityPlus
         }
 
         /// <summary>
-        /// Get the immediately following sibling of each element in the set of matched elements.
+        /// Get the immediately preceding sibling of each element in the set of matched elements.
         /// </summary>
         /// <returns></returns>
         public SharpQuery Prev()
         {
-            return new SharpQuery(_context.Select(n => n.NextSiblingElement()).Where(n => n != null), this);
+            return new SharpQuery(_context.Select(n => n.PreviousSiblingElement()).Where(n => n != null), this);
         }
 
         /// <summary>
@@ -157,7 +157,6 @@ namespace HtmlAgilityPlus
         {
             throw new NotImplementedException();
         }
-
 
         /// <summary>
         /// Get all preceding siblings of each element in the set of matched elements, optionally filtered by a selector.
@@ -289,12 +288,46 @@ namespace HtmlAgilityPlus
         /// <summary>
         /// Reduce the set of matched elements to a subset specified by a range of indices.
         /// </summary>
-        /// <param name="start">An integer indicating the 0-based position at which the elements begin to be selected. If negative, it indicates an offset from the end of the set.</param>
+        /// <param name="start">An integer indicating the 0-based position at which the elements begin to be selected. If negative, it indicates an offset from the end of the set. If omitted, it will start at the beginning.</param>
         /// <param name="end">An integer indicating the 0-based position at which the elements stop being selected. If negative, it indicates an offset from the end of the set. If omitted, the range continues until the end of the set.</param>
+        /// <param name="step">An integer indicating how many nodes to skip before taking the next one. May be negative, but not 0.</param>
         /// <returns></returns>
-        public SharpQuery Slice(int start, int? end = null)
+        public SharpQuery Slice(int? start, int? end = null, int step = 1)
         {
-            throw new NotImplementedException();
+            if (step == 0) throw new ArgumentException("Step cannot be zero.", "step");
+
+            if (start == null)
+            {
+                if (step > 0) start = 0;
+                else start = _context.Count - 1;
+            }
+            else if (start < 0)
+            {
+                if (start < -_context.Count) start = 0;
+                else start += _context.Count;
+            }
+            else if (start > _context.Count) start = _context.Count;
+
+            if (end == null)
+            {
+                if (step > 0) end = _context.Count;
+                else end = -1;
+            }
+            else if (end < 0)
+            {
+                if (end < -_context.Count) end = 0;
+                else end += _context.Count;
+            }
+            else if (end > _context.Count) end = _context.Count;
+
+            if (start == end || start < end && step < 0 || start > end && step > 0) 
+                return new SharpQuery(Enumerable.Empty<HtmlNode>(), this);
+
+            int length = (int)(((end - start) / (float)step) + 0.5f);
+            var result = new List<HtmlNode>(length);
+            for (int i = (int)start, j = 0; j < length; i += step, ++j)
+                result.Add(_context[i]);
+            return new SharpQuery(result, this);
         }
     }
 }

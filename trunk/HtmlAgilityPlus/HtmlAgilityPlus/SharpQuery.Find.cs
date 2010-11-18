@@ -17,49 +17,53 @@ namespace HtmlAgilityPlus
         /// <returns></returns>
         public SharpQuery Find(string selector)
         {
-            return new SharpQuery(Find_Multi(selector), this);
+            return new SharpQuery(Find_Multi(Children().All(), selector), this);
         }
 
         /// <summary>
-        /// 
+        /// Get the descendants of each element in the current set of matched elements, filtered by a selector.
         /// </summary>
+        /// <param name="nodes">The nodes whose descendants are to be searched.</param>
         /// <param name="selector">A selector in the form <c>A, B</c></param>
         /// <returns></returns>
-        private IEnumerable<HtmlNode> Find_Multi(string selector)
+        private static IEnumerable<HtmlNode> Find_Multi(IEnumerable<HtmlNode> nodes, string selector)
         {
-            return selector.SplitOn(',').SelectMany(p => Find_Single(p.Value));
+            return selector.SplitOn(',').SelectMany(p => Find_Single(nodes, p.Value));
         }
 
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="nodes"></param>
         /// <param name="selector">A selector in the form <c>A > B</c></param>
         /// <returns></returns>
-        private IEnumerable<HtmlNode> Find_Single(string selector)
+        private static IEnumerable<HtmlNode> Find_Single(IEnumerable<HtmlNode> nodes, string selector)
         {
-            return Find_Combinator(selector.SplitOn(Combinators.AsArray).Reverse());
+            return Find_Combinator(nodes, selector.SplitOn(Combinators.AsArray).Reverse());
         }
 
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="nodes"></param>
         /// <param name="pairs">A key/value pair where the key is a combinator or null, and the value is a simple selector.</param>
         /// <returns></returns>
-        private IEnumerable<HtmlNode> Find_Combinator(IEnumerable<KeyValuePair<char?, string>> pairs)
+        private static IEnumerable<HtmlNode> Find_Combinator(IEnumerable<HtmlNode> nodes, IEnumerable<KeyValuePair<char?, string>> pairs)
         {
             var rest = pairs.Skip(1);
-            return rest.Aggregate(Find_Simple(pairs.First().Value), (accum, pair) => Filter_Combinator(accum, pair.Key, Find_Combinator(rest)));
+            return rest.Aggregate(Find_Simple(nodes, pairs.First().Value), (accum, pair) => Filter_Combinator(accum, pair.Key, Find_Combinator(nodes, rest)));
         }
 
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="nodes"></param>
         /// <param name="selector">A selector in the form <c>a#b.c[d='e']:f(g)</c></param>
         /// <returns></returns>
-        private IEnumerable<HtmlNode> Find_Simple(string selector)
+        private static IEnumerable<HtmlNode> Find_Simple(IEnumerable<HtmlNode> nodes, string selector)
         {
             var chunks = selector.SplitBefore(Selectors.AsArray).Where(s => !string.IsNullOrEmpty(s));
-            return chunks.Aggregate(Children().All(), Filter_Chunk);
+            return chunks.Aggregate(nodes, Filter_Chunk);
         }
 
         /// <summary>
@@ -181,7 +185,9 @@ namespace HtmlAgilityPlus
                     }
                     break;
                 case "enabled":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (!node.HasAttr("disabled"))
+                            yield return node;
                     break;
                 case "eq":
                     {
@@ -195,7 +201,9 @@ namespace HtmlAgilityPlus
                         if (p.Key % 2 == 0) yield return p.Value;
                     break;
                 case "file":
-                    throw new NotImplementedException();
+                    foreach (var node in nodes)
+                        if (node.Name == "input" && node.Attr("type") == "file")
+                            yield return node;
                     break;
                 case "first-child":
                     foreach (var node in nodes)
@@ -226,7 +234,7 @@ namespace HtmlAgilityPlus
                     break;
                 case "input":
                     foreach (var node in nodes)
-                        if (node.Name == "input" || node.Name == "textarea" || node.Name == "select")
+                        if (node.Name == "input" || node.Name == "textarea" || node.Name == "select" || node.Name == "button")
                             yield return node;
                     break;
                 case "last-child":

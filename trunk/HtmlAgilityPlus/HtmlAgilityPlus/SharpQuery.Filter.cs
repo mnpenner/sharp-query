@@ -15,7 +15,7 @@ namespace HtmlAgilityPlus
         /// <returns></returns>
         public SharpQuery Filter(string selector)
         {
-            throw new NotImplementedException();
+            return new SharpQuery(Find_Multi(_context, selector), this);
         }
 
         /// <summary>
@@ -31,11 +31,11 @@ namespace HtmlAgilityPlus
         /// <summary>
         /// Reduce the set of matched elements to those that match the selector or pass the function's test.
         /// </summary>
-        /// <param name="element">An element to match the current set of elements against.</param>
+        /// <param name="elements">An element to match the current set of elements against.</param>
         /// <returns></returns>
-        public SharpQuery Filter(HtmlNode element)
+        public SharpQuery Filter(params HtmlNode[] elements)
         {
-            throw new NotImplementedException();
+            return new SharpQuery(_context.Where(node => elements.Contains(node)), this);
         }
 
         /// <summary>
@@ -45,7 +45,10 @@ namespace HtmlAgilityPlus
         /// <returns></returns>
         public SharpQuery Filter(SharpQuery sharpQueryObject)
         {
-            throw new NotImplementedException();
+            var nodeSet = new HashSet<HtmlNode>(_context);
+            var otherNodes = new HashSet<HtmlNode>(sharpQueryObject._context);
+            nodeSet.IntersectWith(otherNodes);
+            return new SharpQuery(nodeSet, this);
         }
     }
 }
