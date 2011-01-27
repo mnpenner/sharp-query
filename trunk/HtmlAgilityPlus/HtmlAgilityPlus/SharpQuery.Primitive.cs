@@ -51,7 +51,7 @@ namespace HtmlAgilityPlus
         /// <summary>
         /// Search for a given element from among the matched elements.
         /// </summary>
-        /// <param name="selector">A selector representing a jQuery collection in which to look for an element.</param>
+        /// <param name="selector">A selector representing a SharpQuery collection in which to look for an element.</param>
         /// <returns>An integer indicating the position of the original element relative to the elements matched by the selector. If the element is not found, <c>Index()</c> will return -1.</returns>
         public int Index(string selector)
         {

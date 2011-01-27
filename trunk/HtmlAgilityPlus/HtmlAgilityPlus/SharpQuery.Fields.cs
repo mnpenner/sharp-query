@@ -19,7 +19,7 @@ namespace HtmlAgilityPlus
 
 
         /// <summary>
-        /// The DOM node context originally passed to jQuery(); if none was passed then context will likely be the document.
+        /// The DOM node context originally passed to SharpQuery(); if none was passed then context will likely be the document.
         /// </summary>
         public HtmlNode[] Context
         {

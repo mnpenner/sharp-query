@@ -123,7 +123,7 @@ namespace HtmlAgilityPlus
                         string funcName = parts[0];
                         var args = new List<string>();
                         if (parts.Length >= 2)
-                            args.AddRange(parts[2].SplitOn(',').Select(p => p.Value));
+                            args.AddRange(parts[1].Slice(1,-1).SplitOn(',').Select(p => p.Value));
                         foreach (var node in Filter_Pseudo(nodes, funcName, args.ToArray()))
                             yield return node;
 

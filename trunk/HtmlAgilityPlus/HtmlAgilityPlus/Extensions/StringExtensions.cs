@@ -6,9 +6,9 @@ using System.Text.RegularExpressions;
 
 namespace HtmlAgilityPlus.Extensions
 {
-    public static class StringExtensions
+    internal static class StringExtensions
     {
-        public static IEnumerable<KeyValuePair<char?, string>> SplitOn(this string input, params char[] separators)
+        internal static IEnumerable<KeyValuePair<char?, string>> SplitOn(this string input, params char[] separators)
         {
             int startIndex = 0;
             var state = new Stack<char>();
@@ -36,12 +36,12 @@ namespace HtmlAgilityPlus.Extensions
             yield return new KeyValuePair<char?, string>(null, input.Substring(startIndex));
         }
 
-        public static string StripSlashes(this string input)
+        internal static string StripSlashes(this string input)
         {
             return Regex.Replace(input, @"\\([""'\\/])", "$1");
         }
 
-        public static IEnumerable<string> SplitBefore(this string input, params char[] separators)
+        internal static IEnumerable<string> SplitBefore(this string input, params char[] separators)
         {
             int start = 0;
             char? state = null;
@@ -66,7 +66,7 @@ namespace HtmlAgilityPlus.Extensions
             yield return input.Substring(start);
         }
 
-        public static string Slice(this string str, int? start = null, int? end = null, int step = 1)
+        internal static string Slice(this string str, int? start = null, int? end = null, int step = 1)
         {
             if (step == 0) throw new ArgumentException("Step size cannot be zero.", "step");
 

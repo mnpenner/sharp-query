@@ -52,7 +52,7 @@ namespace HtmlAgilityPlus
         /// Get the first ancestor element that matches the selector, beginning at the current element and progressing up through the DOM tree.
         /// </summary>
         /// <param name="selector">A string containing a selector expression to match elements against.</param>
-        /// <param name="context">A DOM element within which a matching element may be found. If no context is passed in then the context of the jQuery set will be used instead.</param>
+        /// <param name="context">A DOM element within which a matching element may be found. If no context is passed in then the context of the SharpQuery set will be used instead.</param>
         /// <returns></returns>
         public SharpQuery Closest(string selector, HtmlNode context = null)
         {

@@ -10,6 +10,11 @@ namespace HtmlAgilityPlus.Extensions
     {
         private static Dictionary<HtmlNode, Dictionary<string, object>> _data = new Dictionary<HtmlNode, Dictionary<string, object>>();
 
+        /// <summary>
+        /// Gets the previous adjacent element in the DOM tree. Excludes text and comment nodes.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         public static HtmlNode PreviousSiblingElement(this HtmlNode node)
         {
             for (var it = node.PreviousSibling; it != null; it = it.PreviousSibling)
@@ -18,6 +23,11 @@ namespace HtmlAgilityPlus.Extensions
             return null;
         }
 
+        /// <summary>
+        /// Gets the next adjacent element in the DOM tree. Excludes text and comment nodes.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         public static HtmlNode NextSiblingElement(this HtmlNode node)
         {
             for (var it = node.NextSibling; it != null; it = it.NextSibling)
@@ -26,6 +36,11 @@ namespace HtmlAgilityPlus.Extensions
             return null;
         }
 
+        /// <summary>
+        /// Gets the sibling elements that come after the node in the DOM tree.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         public static HtmlNodeCollection NextSiblingElements(this HtmlNode node)
         {
             var siblings = new HtmlNodeCollection(node.ParentNode);
@@ -35,6 +50,11 @@ namespace HtmlAgilityPlus.Extensions
             return siblings;
         }
 
+        /// <summary>
+        /// Gets the sibling elements prior to the node in the DOM tree.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         public static HtmlNodeCollection PreviousSiblingElements(this HtmlNode node)
         {
             var siblings = new HtmlNodeCollection(node.ParentNode);
@@ -44,6 +64,11 @@ namespace HtmlAgilityPlus.Extensions
             return siblings;
         }
 
+        /// <summary>
+        /// Gets the children, excluding text and comment nodes.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         public static HtmlNodeCollection ChildElements(this HtmlNode node)
         {
             var children = new HtmlNodeCollection(node);
@@ -53,6 +78,11 @@ namespace HtmlAgilityPlus.Extensions
             return children;
         }
 
+        /// <summary>
+        /// Gets the parent element of the node.
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
         public static HtmlNode ParentElement(this HtmlNode node)
         {
             for (var it = node.ParentNode; it != null; it = it.ParentNode)

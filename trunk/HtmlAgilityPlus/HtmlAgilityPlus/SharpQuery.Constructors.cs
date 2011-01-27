@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -48,6 +49,17 @@ namespace HtmlAgilityPlus
         /// <param name="doc"></param>
         public SharpQuery(HtmlDocument doc)
         {
+            _context.Add(doc.DocumentNode);
+        }
+
+        /// <summary>
+        /// Constructs a new SharpQuery object from the specified stream containing only the document node.
+        /// </summary>
+        /// <param name="stream"></param>
+        public SharpQuery(Stream stream)
+        {
+            var doc = new HtmlDocument();
+            doc.Load(stream);
             _context.Add(doc.DocumentNode);
         }
 
