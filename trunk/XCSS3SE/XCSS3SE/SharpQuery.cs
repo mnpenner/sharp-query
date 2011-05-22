@@ -207,7 +207,7 @@ namespace XCSS3SE
             else set = new HashSet<XmlElement>();
         }
 
-        public HashSet<XmlElement> Find_SOSS(Match match, Capture capture)
+        private HashSet<XmlElement> Find_SOSS(Match match, Capture capture)
         {
             HashSet<XmlElement> set = null;
 
