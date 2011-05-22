@@ -65,7 +65,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\XCSS3E\XCSS3SE.csproj">
+    <ProjectReference Include="..\XCSS3SE\XCSS3SE.csproj">
       <Project>{1650386E-30A0-4457-A5BF-F98C4FEC5B9A}</Project>
       <Name>XCSS3SE</Name>
     </ProjectReference>
