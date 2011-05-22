@@ -74,27 +74,45 @@ namespace XCSS3SE
                 throw new ArgumentNullException("htmlOrUri");
 
             if (Uri.IsWellFormedUriString(htmlOrUri, UriKind.Absolute))
-            {
-                var uri = new Uri(htmlOrUri);
-                if (!_schemes.Contains(uri.Scheme))
-                    throw new NotSupportedException(string.Format("Scheme not supported: {0}", uri.Scheme));
-                using (var wc = new WebClient())
-                    htmlOrUri = wc.DownloadString(uri);
-            }
+                LoadUri(htmlOrUri);
+            else
+                LoadHtml(htmlOrUri);
+        }
 
-            var sgml = new SgmlReader
+        private static XmlReader GetReader(string html)
+        {
+            return new SgmlReader
             {
                 DocType = "html",
                 WhitespaceHandling = WhitespaceHandling.All,
                 CaseFolding = CaseFolding.ToLower,
-                InputStream = new StringReader(htmlOrUri),
+                InputStream = new StringReader(html),
             };
-
-            _xmlDoc.Load(sgml);
-            BuildIndexes();
         }
 
-        private void BuildIndexes()
+        public void LoadHtml(string html)
+        {
+            var reader = GetReader(html);
+            _xmlDoc.Load(reader);
+            BuildDictionaries();
+        }
+
+        public void LoadUri(string uri)
+        {
+            LoadUri(new Uri(uri));
+        }
+
+        public void LoadUri(Uri uri)
+        {
+            string html;
+            if (!_schemes.Contains(uri.Scheme))
+                throw new NotSupportedException(string.Format("Scheme not supported: {0}", uri.Scheme));
+            using (var wc = new WebClient())
+                html = wc.DownloadString(uri);
+            LoadHtml(html);
+        }
+
+        private void BuildDictionaries()
         {
             _idDict = new Dictionary<string,XmlElement>();
             _classDict = new Dictionary<string, HashSet<XmlElement>>();
