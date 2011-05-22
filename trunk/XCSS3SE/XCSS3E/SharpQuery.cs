@@ -79,6 +79,11 @@ namespace XCSS3SE
                 LoadHtml(htmlOrUri);
         }
 
+        public SharpQuery(Uri uri) : this()
+        {
+            LoadUri(uri);
+        }
+
         private static XmlReader GetReader(string html)
         {
             return new SgmlReader

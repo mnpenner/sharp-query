@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml;
-using Sgml;
 
 namespace XCSS3SE
 {
@@ -21,7 +20,7 @@ namespace XCSS3SE
             {
                 Console.WriteLine("{0} > {1}", el.CssSelector(), el.InnerText);
             }
-
+            
             Console.WriteLine("Done!");
             Console.ReadLine();
         }
