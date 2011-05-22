@@ -10,7 +10,7 @@ using Sgml;
 
 namespace XCSS3SE
 {
-    class SharpQuery
+    public class SharpQuery
     {
         private static readonly FlexDict _patterns;
         private static readonly Regex _re;
